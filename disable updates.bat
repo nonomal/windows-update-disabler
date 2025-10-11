@@ -7,9 +7,11 @@ if not "%2"=="system" (powershell . '%~dp0\PsExec.exe' /accepteula -i -s -d '%0'
 
 :: Disable update related services
 for %%i in (wuauserv, UsoSvc, uhssvc, WaaSMedicSvc) do (
-	net stop %%i
+	:retry
 	sc config %%i start= disabled
 	sc failure %%i reset= 0 actions= ""
+	net stop %%i
+	sc query %%i | find "STOPPED" || (timeout /t 2 & goto retry)
 )
 
 :: Brute force rename services
